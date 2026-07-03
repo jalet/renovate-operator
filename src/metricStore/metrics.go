@@ -540,10 +540,38 @@ func SetPullRequestsAwaitingApproval(namespace, job, project string, count int) 
 	pullRequestsAwaitingApproval.WithLabelValues(namespace, job, project).Set(float64(count))
 }
 
-// SetRepositoriesByStatus sets the count of repositories in a given Renovate result
-// status (e.g. active/onboarding/disabled/no_config/unknown) for a job.
+// SetRepositoriesByStatus sets the count of repositories for a job in a given Renovate
+// result status. The status label must be a bounded value from NormalizeRepositoryStatus:
+// disabled, no_config, onboarding, onboarding_closed, unknown, or other.
 func SetRepositoriesByStatus(namespace, job, status string, count int) {
 	repositoriesByStatus.WithLabelValues(namespace, job, status).Set(float64(count))
+}
+
+// ResetRepositoriesByStatus clears every repositories_by_status series. The executor
+// repopulates the gauge for all jobs on each tick, so resetting first prevents stale
+// values lingering for statuses that fall to zero (or for deleted jobs).
+func ResetRepositoriesByStatus() {
+	repositoriesByStatus.Reset()
+}
+
+// NormalizeRepositoryStatus maps a raw Renovate result status (as produced by the log
+// parser, which may emit friendly strings or an arbitrary finished.Result) to a bounded
+// label value, keeping the repositories_by_status metric's cardinality fixed.
+func NormalizeRepositoryStatus(raw string) string {
+	switch raw {
+	case "Disabled":
+		return "disabled"
+	case "No Config":
+		return "no_config"
+	case "Onboarding":
+		return "onboarding"
+	case "Onboarding Closed":
+		return "onboarding_closed"
+	case "Unknown", "":
+		return "unknown"
+	default:
+		return "other"
+	}
 }
 
 func AddPullRequestsCreated(ctx context.Context, namespace, job string, count int) {

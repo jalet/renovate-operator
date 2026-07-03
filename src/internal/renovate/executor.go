@@ -156,6 +156,9 @@ func (e *renovateExecutor) countRunningProjects(renovateJobs []api.RenovateJob) 
 	globalRunning := 0
 	perJobRunning := make(map[string]int, len(renovateJobs))
 
+	// Clear stale repositories_by_status series before repopulating for every job this tick.
+	metricStore.ResetRepositoriesByStatus()
+
 	for i := range renovateJobs {
 		renovateJob := &renovateJobs[i]
 		jobId := crdManager.RenovateJobIdentifier{Name: renovateJob.Name, Namespace: renovateJob.Namespace}
@@ -167,7 +170,7 @@ func (e *renovateExecutor) countRunningProjects(renovateJobs []api.RenovateJob) 
 		for j := range renovateJob.Status.Projects {
 			project := &renovateJob.Status.Projects[j]
 			if project.RenovateResultStatus != nil {
-				byResultStatus[*project.RenovateResultStatus]++
+				byResultStatus[metricStore.NormalizeRepositoryStatus(*project.RenovateResultStatus)]++
 			}
 			switch project.Status {
 			case api.JobStatusRunning:

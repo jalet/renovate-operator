@@ -234,6 +234,39 @@ func TestSecOpsCounters(t *testing.T) {
 	secretResolutionErrors.DeleteLabelValues("not_found")
 }
 
+func TestNormalizeRepositoryStatus(t *testing.T) {
+	tests := map[string]string{
+		"Disabled":            "disabled",
+		"No Config":           "no_config",
+		"Onboarding":          "onboarding",
+		"Onboarding Closed":   "onboarding_closed",
+		"Unknown":             "unknown",
+		"":                    "unknown",
+		"done":                "other",
+		"disabled-no-config":  "other",
+		"something-brand-new": "other",
+	}
+	for raw, want := range tests {
+		if got := NormalizeRepositoryStatus(raw); got != want {
+			t.Errorf("NormalizeRepositoryStatus(%q) = %q, want %q", raw, got, want)
+		}
+	}
+}
+
+func TestResetRepositoriesByStatus(t *testing.T) {
+	SetRepositoriesByStatus("ns", "job", "disabled", 3)
+	SetRepositoriesByStatus("ns", "job", "unknown", 1)
+	if testutil.CollectAndCount(repositoriesByStatus) == 0 {
+		t.Fatal("repositoriesByStatus should have series before reset")
+	}
+
+	ResetRepositoriesByStatus()
+
+	if v := testutil.CollectAndCount(repositoriesByStatus); v != 0 {
+		t.Errorf("repositoriesByStatus should be empty after reset, got %d series", v)
+	}
+}
+
 func TestDeleteProjectMetricsRemovesNewSeries(t *testing.T) {
 	ns, job, proj := "del2-ns", "del2-job", "del2-proj"
 

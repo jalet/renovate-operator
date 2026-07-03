@@ -66,7 +66,7 @@ metrics for free (`controller_runtime_reconcile_*`, workqueue depth/latency,
 | renovate_operator_pull_requests_created_total     | Counter | Pull requests created                                      | `renovate_namespace`, `renovate_job`            |
 | renovate_operator_pull_requests_merged_total      | Counter | Pull requests automerged (updates that landed)             | `renovate_namespace`, `renovate_job`            |
 | renovate_operator_pull_requests_updated_total     | Counter | Pull requests updated                                      | `renovate_namespace`, `renovate_job`            |
-| renovate_operator_repositories_by_status          | Gauge   | Repositories per Renovate result status (coverage)         | `renovate_namespace`, `renovate_job`, `status`  |
+| renovate_operator_repositories_by_status          | Gauge   | Repositories per Renovate result status (coverage). `status` is a bounded enum: `disabled`, `no_config`, `onboarding`, `onboarding_closed`, `unknown`, `other` | `renovate_namespace`, `renovate_job`, `status`  |
 | renovate_operator_approvals_needed                | Gauge   | Dependency updates awaiting approval after the last run    | `renovate_namespace`, `renovate_job`, `project` |
 
 ## Log quality
